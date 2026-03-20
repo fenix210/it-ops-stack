@@ -1,0 +1,54 @@
+{
+  "name": "it-ops-stacks",
+  "version": "0.1.0",
+  "metadata": {
+    "description": "Curated Claude Code skills for IT operations professionals. Bundles for JSM ticket management, Google Workspace administration, Okta identity management, MDM device queries, and Slack IT support.",
+    "author": {
+      "name": "fenix210",
+      "url": "https://github.com/fenix210/it-ops-stack"
+    },
+    "tags": ["it-ops", "itsm", "identity", "mdm", "google-workspace", "okta", "jira", "kandji", "intune", "jamf", "slack"]
+  },
+  "plugins": [
+    {
+      "name": "jsm-ticket-management",
+      "source": "./plugins/jsm-ticket-management",
+      "description": "Jira Service Management ticket operations — search, update, comment, transition, and triage tickets using natural language.",
+      "version": "0.1.0",
+      "category": "it-ops",
+      "tags": ["jira", "jsm", "itsm", "tickets", "service-desk"]
+    },
+    {
+      "name": "google-workspace-admin",
+      "source": "./plugins/google-workspace-admin",
+      "description": "Google Workspace administration via natural language — replaces common GAM commands with conversational queries. All write operations require explicit confirmation.",
+      "version": "0.1.0",
+      "category": "it-ops",
+      "tags": ["google-workspace", "gam", "admin", "users", "groups"]
+    },
+    {
+      "name": "okta-admin",
+      "source": "./plugins/okta-admin",
+      "description": "Okta identity and access management — user lookups, group management, app assignments, and factor administration. Onboarding and offboarding disabled by default.",
+      "version": "0.1.0",
+      "category": "it-ops",
+      "tags": ["okta", "identity", "iam", "sso", "scim", "mfa"]
+    },
+    {
+      "name": "mdm-query",
+      "source": "./plugins/mdm-query",
+      "description": "Read-only MDM device queries across Kandji, Jamf, and Intune. No device actions — query only.",
+      "version": "0.1.0",
+      "category": "it-ops",
+      "tags": ["mdm", "kandji", "jamf", "intune", "devices"]
+    },
+    {
+      "name": "slack-it-support",
+      "source": "./plugins/slack-it-support",
+      "description": "Slack communication for IT support workflows — reply to users after resolving tickets, post status updates, and read thread context.",
+      "version": "0.1.0",
+      "category": "it-ops",
+      "tags": ["slack", "communication", "notifications", "it-support"]
+    }
+  ]
+}

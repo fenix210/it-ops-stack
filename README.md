@@ -31,7 +31,7 @@ by default. MDM queries are strictly read-only.
 npm install -g @anthropic-ai/claude-code
 
 # 2. Add this marketplace
-/plugin marketplace add YOURHANDLE/it-ops-stacks
+/plugin marketplace add fenix210/it-ops-stacks
 
 # 3. Install the plugins you need
 /plugin install jsm-ticket-management@it-ops-stacks
