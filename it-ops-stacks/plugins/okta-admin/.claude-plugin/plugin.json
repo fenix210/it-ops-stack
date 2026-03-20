@@ -1,0 +1,9 @@
+{
+  "name": "okta-admin",
+  "description": "Okta identity and access management — user lookups, group management, app assignments, and factor administration. Onboarding and offboarding workflows are disabled by default and must be explicitly enabled. Use when managing Okta users, groups, applications, or troubleshooting SSO issues.",
+  "version": "0.1.0",
+  "author": {
+    "name": "IT Ops Stacks"
+  },
+  "skills": ["skills/okta-admin"]
+}
