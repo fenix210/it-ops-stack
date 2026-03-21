@@ -1,13 +1,8 @@
 {
   "name": "it-ops-stacks",
-  "version": "0.1.0",
-  "metadata": {
-    "description": "Curated Claude Code skills for IT operations professionals. Bundles for JSM ticket management, Google Workspace administration, Okta identity management, MDM device queries, and Slack IT support.",
-    "author": {
-      "name": "fenix210",
-      "url": "https://github.com/fenix210/it-ops-stack"
-    },
-    "tags": ["it-ops", "itsm", "identity", "mdm", "google-workspace", "okta", "jira", "kandji", "intune", "jamf", "slack"]
+  "owner": {
+    "name": "fenix210",
+    "email": ""
   },
   "plugins": [
     {
