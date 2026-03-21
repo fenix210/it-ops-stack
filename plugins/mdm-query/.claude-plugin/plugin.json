@@ -1,9 +1,11 @@
 {
   "name": "mdm-query",
-  "description": "Read-only MDM device queries across Kandji, Jamf, and Intune. Look up device assignments, installed profiles, OS versions, compliance status, and hardware specs. No device actions or commands — query only. Use when someone asks about a user's device, what profiles are pushed, compliance status, or fleet inventory questions.",
+  "description": "Read-only MDM device queries across Kandji, Jamf, and Intune. No device actions — query only.",
   "version": "0.1.0",
-  "author": {
-    "name": "IT Ops Stacks"
-  },
-  "skills": ["skills/mdm-query"]
+  "skills": [
+    {
+      "name": "mdm-query",
+      "path": "skills/mdm-query"
+    }
+  ]
 }

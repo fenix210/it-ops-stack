@@ -1,9 +1,11 @@
 {
   "name": "slack-it-support",
-  "description": "Slack communication for IT support workflows — reply to users after resolving tickets, post status updates in IT channels, and read thread context for ticket creation. Designed to work alongside JSM, Okta, and GWS skills. Use when the user asks to reply in Slack, notify someone in Slack, post an update, or when the workflow involves a Slack-originated ticket.",
+  "description": "Slack communication for IT support workflows — reply to users after resolving tickets, post status updates, and read thread context.",
   "version": "0.1.0",
-  "author": {
-    "name": "IT Ops Stacks"
-  },
-  "skills": ["skills/slack-it-support"]
+  "skills": [
+    {
+      "name": "slack-it-support",
+      "path": "skills/slack-it-support"
+    }
+  ]
 }

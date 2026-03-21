@@ -1,9 +1,11 @@
 {
   "name": "google-workspace-admin",
-  "description": "Google Workspace administration via natural language — replaces common GAM commands with conversational queries. All write operations require explicit confirmation before execution. Use when managing Google Workspace users, groups, OUs, devices, or audit logs.",
+  "description": "Google Workspace administration via natural language — replaces common GAM commands with conversational queries. All write operations require explicit confirmation.",
   "version": "0.1.0",
-  "author": {
-    "name": "IT Ops Stacks"
-  },
-  "skills": ["skills/gws-admin"]
+  "skills": [
+    {
+      "name": "gws-admin",
+      "path": "skills/gws-admin"
+    }
+  ]
 }

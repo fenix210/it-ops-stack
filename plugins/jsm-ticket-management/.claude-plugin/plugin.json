@@ -1,9 +1,11 @@
-{
+{{
   "name": "jsm-ticket-management",
-  "description": "Jira Service Management ticket operations — search, update, comment, transition, and triage tickets using natural language. Use when working with JSM tickets, IT support queues, incident management, or service requests.",
+  "description": "Jira Service Management ticket operations — search, update, comment, transition, and triage tickets using natural language.",
   "version": "0.1.0",
-  "author": {
-    "name": "IT Ops Stacks"
-  },
-  "skills": ["skills/jsm-tickets"]
+  "skills": [
+    {
+      "name": "jsm-tickets",
+      "path": "skills/jsm-tickets"
+    }
+  ]
 }
