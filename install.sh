@@ -173,48 +173,53 @@ IT_OS_DIR="$HOME/.it-os"
 mkdir -p "$IT_OS_DIR"
 
 # Google Workspace Admin MCP
-if command -v gws-admin-mcp &> /dev/null; then
-    print_success "gws-admin-mcp already installed"
-else
-    GWS_MCP_DIR="$IT_OS_DIR/gws-admin-mcp"
-    if [[ ! -d "$GWS_MCP_DIR" ]]; then
-        git clone https://github.com/fenix210/gws-admin-mcp.git "$GWS_MCP_DIR" && \
-            print_success "gws-admin-mcp cloned" || \
-            print_error "Failed to clone gws-admin-mcp"
-    fi
-    if [[ -d "$GWS_MCP_DIR" ]]; then
+GWS_MCP_DIR="$IT_OS_DIR/gws-admin-mcp"
+if [[ ! -d "$GWS_MCP_DIR" ]]; then
+    git clone https://github.com/fenix210/gws-admin-mcp.git "$GWS_MCP_DIR" && \
+        print_success "gws-admin-mcp cloned" || \
+        print_error "Failed to clone gws-admin-mcp"
+fi
+if [[ -d "$GWS_MCP_DIR" ]]; then
+    # Create venv and install inside it
+    if [[ ! -d "$GWS_MCP_DIR/.venv" ]]; then
         if [[ "$PKG_MANAGER" == "uv" ]]; then
-            uv pip install --system -e "$GWS_MCP_DIR" && \
+            uv venv "$GWS_MCP_DIR/.venv" && \
+            uv pip install --python "$GWS_MCP_DIR/.venv/bin/python" -e "$GWS_MCP_DIR" && \
                 print_success "gws-admin-mcp installed" || \
                 print_warning "gws-admin-mcp install failed"
         else
-            pip install --user -e "$GWS_MCP_DIR" && \
+            python3 -m venv "$GWS_MCP_DIR/.venv" && \
+            "$GWS_MCP_DIR/.venv/bin/pip" install -e "$GWS_MCP_DIR" && \
                 print_success "gws-admin-mcp installed" || \
                 print_warning "gws-admin-mcp install failed"
         fi
+    else
+        print_success "gws-admin-mcp already installed"
     fi
 fi
 
 # MDM MCP (Kandji / Jamf / Intune)
-if command -v mdm-mcp &> /dev/null; then
-    print_success "mdm-mcp already installed"
-else
-    MDM_MCP_DIR="$IT_OS_DIR/mdm-mcp"
-    if [[ ! -d "$MDM_MCP_DIR" ]]; then
-        git clone https://github.com/fenix210/mdm-mcp.git "$MDM_MCP_DIR" && \
-            print_success "mdm-mcp cloned" || \
-            print_error "Failed to clone mdm-mcp"
-    fi
-    if [[ -d "$MDM_MCP_DIR" ]]; then
+MDM_MCP_DIR="$IT_OS_DIR/mdm-mcp"
+if [[ ! -d "$MDM_MCP_DIR" ]]; then
+    git clone https://github.com/fenix210/mdm-mcp.git "$MDM_MCP_DIR" && \
+        print_success "mdm-mcp cloned" || \
+        print_error "Failed to clone mdm-mcp"
+fi
+if [[ -d "$MDM_MCP_DIR" ]]; then
+    if [[ ! -d "$MDM_MCP_DIR/.venv" ]]; then
         if [[ "$PKG_MANAGER" == "uv" ]]; then
-            uv pip install --system -e "${MDM_MCP_DIR}[intune]" && \
+            uv venv "$MDM_MCP_DIR/.venv" && \
+            uv pip install --python "$MDM_MCP_DIR/.venv/bin/python" -e "${MDM_MCP_DIR}[intune]" && \
                 print_success "mdm-mcp installed (with Intune support)" || \
                 print_warning "mdm-mcp install failed"
         else
-            pip install --user -e "${MDM_MCP_DIR}[intune]" && \
+            python3 -m venv "$MDM_MCP_DIR/.venv" && \
+            "$MDM_MCP_DIR/.venv/bin/pip" install -e "${MDM_MCP_DIR}[intune]" && \
                 print_success "mdm-mcp installed (with Intune support)" || \
                 print_warning "mdm-mcp install failed"
         fi
+    else
+        print_success "mdm-mcp already installed"
     fi
 fi
 
@@ -344,7 +349,7 @@ if ask_yes_no "Connect Google Workspace now?"; then
         GWS_CLIENT_FILE="${GWS_CLIENT_FILE/#\~/$HOME}"
 
         claude mcp add-json "gws-admin" "{
-            \"command\": \"gws-admin-mcp\",
+            \"command\": \"$HOME/.it-os/gws-admin-mcp/.venv/bin/gws-admin-mcp\",
             \"env\": {
                 \"GWS_OAUTH_CLIENT_FILE\": \"$GWS_CLIENT_FILE\",
                 \"GOOGLE_WORKSPACE_DOMAIN\": \"$GWS_DOMAIN\"
@@ -479,7 +484,7 @@ if [[ "$MDM_CONFIGURED" == true ]]; then
 
     # Register the MCP server with all collected credentials
     claude mcp add-json "mdm" "{
-        \"command\": \"mdm-mcp\",
+        \"command\": \"$HOME/.it-os/mdm-mcp/.venv/bin/mdm-mcp\",
         \"env\": { $MDM_ENV_VARS }
     }" --scope user 2>/dev/null && \
         print_success "MDM MCP configured with all selected platforms" || \
