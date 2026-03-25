@@ -184,7 +184,7 @@ else
     fi
     if [[ -d "$GWS_MCP_DIR" ]]; then
         if [[ "$PKG_MANAGER" == "uv" ]]; then
-            uv pip install -e "$GWS_MCP_DIR" && \
+            uv pip install --system -e "$GWS_MCP_DIR" && \
                 print_success "gws-admin-mcp installed" || \
                 print_warning "gws-admin-mcp install failed"
         else
@@ -207,7 +207,7 @@ else
     fi
     if [[ -d "$MDM_MCP_DIR" ]]; then
         if [[ "$PKG_MANAGER" == "uv" ]]; then
-            uv pip install -e "${MDM_MCP_DIR}[intune]" && \
+            uv pip install --system -e "${MDM_MCP_DIR}[intune]" && \
                 print_success "mdm-mcp installed (with Intune support)" || \
                 print_warning "mdm-mcp install failed"
         else
