@@ -90,6 +90,40 @@ else
     exit 1
 fi
 
+# Check for Python
+if command -v python3 &> /dev/null; then
+    PYTHON_VERSION=$(python3 --version 2>/dev/null || echo "unknown")
+    print_success "Python found ($PYTHON_VERSION)"
+else
+    print_error "Python 3 not found — required for MCP servers"
+    echo "  Install Python 3.10+ and re-run this installer."
+    exit 1
+fi
+
+# Check for uv (preferred) or pip, auto-install uv if neither found
+if command -v uv &> /dev/null; then
+    print_success "uv found (preferred Python package manager)"
+    PKG_MANAGER="uv"
+elif command -v pip &> /dev/null; then
+    print_success "pip found"
+    PKG_MANAGER="pip"
+else
+    echo ""
+    print_warning "No Python package manager found — installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null
+    # Source the updated PATH
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+    if command -v uv &> /dev/null; then
+        print_success "uv installed successfully"
+        PKG_MANAGER="uv"
+    else
+        print_error "Failed to install uv. Install manually:"
+        echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"
+        echo "  Then re-run this installer."
+        exit 1
+    fi
+fi
+
 echo ""
 echo -e "${GREEN}Prerequisites met. Let's set up your IT Ops stack.${NC}"
 
@@ -126,6 +160,76 @@ if ask_yes_no "Install the marketplace?"; then
 else
     print_warning "Skipped marketplace installation"
 fi
+
+# ============================================================================
+# Step 1b: Pre-install MCP server packages
+# ============================================================================
+
+echo ""
+echo -e "${BLUE}  Installing MCP server packages...${NC}"
+echo ""
+
+IT_OS_DIR="$HOME/.it-os"
+mkdir -p "$IT_OS_DIR"
+
+# Google Workspace Admin MCP
+if command -v gws-admin-mcp &> /dev/null; then
+    print_success "gws-admin-mcp already installed"
+else
+    GWS_MCP_DIR="$IT_OS_DIR/gws-admin-mcp"
+    if [[ ! -d "$GWS_MCP_DIR" ]]; then
+        git clone https://github.com/fenix210/gws-admin-mcp.git "$GWS_MCP_DIR" && \
+            print_success "gws-admin-mcp cloned" || \
+            print_error "Failed to clone gws-admin-mcp"
+    fi
+    if [[ -d "$GWS_MCP_DIR" ]]; then
+        if [[ "$PKG_MANAGER" == "uv" ]]; then
+            uv pip install -e "$GWS_MCP_DIR" && \
+                print_success "gws-admin-mcp installed" || \
+                print_warning "gws-admin-mcp install failed"
+        else
+            pip install --user -e "$GWS_MCP_DIR" && \
+                print_success "gws-admin-mcp installed" || \
+                print_warning "gws-admin-mcp install failed"
+        fi
+    fi
+fi
+
+# MDM MCP (Kandji / Jamf / Intune)
+if command -v mdm-mcp &> /dev/null; then
+    print_success "mdm-mcp already installed"
+else
+    MDM_MCP_DIR="$IT_OS_DIR/mdm-mcp"
+    if [[ ! -d "$MDM_MCP_DIR" ]]; then
+        git clone https://github.com/fenix210/mdm-mcp.git "$MDM_MCP_DIR" && \
+            print_success "mdm-mcp cloned" || \
+            print_error "Failed to clone mdm-mcp"
+    fi
+    if [[ -d "$MDM_MCP_DIR" ]]; then
+        if [[ "$PKG_MANAGER" == "uv" ]]; then
+            uv pip install -e "${MDM_MCP_DIR}[intune]" && \
+                print_success "mdm-mcp installed (with Intune support)" || \
+                print_warning "mdm-mcp install failed"
+        else
+            pip install --user -e "${MDM_MCP_DIR}[intune]" && \
+                print_success "mdm-mcp installed (with Intune support)" || \
+                print_warning "mdm-mcp install failed"
+        fi
+    fi
+fi
+
+# Okta MCP (official — just clone, uv runs it directly)
+OKTA_MCP_DIR="$IT_OS_DIR/okta-mcp-server"
+if [[ ! -d "$OKTA_MCP_DIR" ]]; then
+    git clone https://github.com/okta/okta-mcp-server.git "$OKTA_MCP_DIR" && \
+        print_success "Okta MCP server cloned" || \
+        print_error "Failed to clone Okta MCP server"
+else
+    print_success "Okta MCP server already cloned"
+fi
+
+echo ""
+print_success "MCP server packages ready"
 
 # ============================================================================
 # Step 2: Connect Jira / JSM
@@ -176,24 +280,9 @@ if ask_yes_no "Connect Okta now?"; then
     if [[ -z "$OKTA_ORG_URL" ]]; then
         print_warning "No URL provided — skipping Okta"
     else
-        echo ""
-        echo "  The official Okta MCP server uses device authorization flow."
-        echo "  Installing and configuring..."
-        echo ""
+        OKTA_MCP_DIR="$HOME/.it-os/okta-mcp-server"
 
-        # Check if uv is available
-        if command -v uv &> /dev/null; then
-            # Clone the official Okta MCP server if not already present
-            OKTA_MCP_DIR="$HOME/.it-ops-stacks/okta-mcp-server"
-            if [[ ! -d "$OKTA_MCP_DIR" ]]; then
-                mkdir -p "$HOME/.it-ops-stacks"
-                git clone https://github.com/okta/okta-mcp-server.git "$OKTA_MCP_DIR" 2>/dev/null && \
-                    print_success "Okta MCP server cloned" || \
-                    print_error "Failed to clone Okta MCP server"
-            else
-                print_success "Okta MCP server already exists at $OKTA_MCP_DIR"
-            fi
-
+        if command -v uv &> /dev/null && [[ -d "$OKTA_MCP_DIR" ]]; then
             echo ""
             echo "  You'll need to create an API Services app in Okta:"
             echo "    1. Go to Okta Admin > Applications > Create App Integration"
@@ -219,9 +308,8 @@ if ask_yes_no "Connect Okta now?"; then
                 print_warning "Skipped Okta Client ID — configure later"
             fi
         else
-            print_warning "uv not found — needed for Okta MCP server"
+            print_warning "Okta MCP server not ready — ensure uv is installed and re-run"
             print_info "Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
-            print_info "Then re-run this installer or configure Okta manually"
         fi
     fi
 else
@@ -248,32 +336,6 @@ echo ""
 if ask_yes_no "Connect Google Workspace now?"; then
     echo ""
 
-    # Check if gws-admin-mcp is installed
-    if command -v gws-admin-mcp &> /dev/null; then
-        print_success "gws-admin-mcp is already installed"
-    else
-        echo "  Installing gws-admin-mcp..."
-        GWS_MCP_DIR="$HOME/.it-ops-stacks/gws-admin-mcp"
-        if [[ ! -d "$GWS_MCP_DIR" ]]; then
-            mkdir -p "$HOME/.it-ops-stacks"
-            git clone https://github.com/fenix210/gws-admin-mcp.git "$GWS_MCP_DIR" 2>/dev/null && \
-                print_success "gws-admin-mcp cloned" || \
-                print_error "Failed to clone gws-admin-mcp"
-        fi
-
-        if command -v pip &> /dev/null; then
-            pip install -e "$GWS_MCP_DIR" --break-system-packages 2>/dev/null && \
-                print_success "gws-admin-mcp installed" || \
-                print_warning "Install failed — try manually: pip install -e $GWS_MCP_DIR"
-        elif command -v uv &> /dev/null; then
-            uv pip install -e "$GWS_MCP_DIR" 2>/dev/null && \
-                print_success "gws-admin-mcp installed" || \
-                print_warning "Install failed — try manually: uv pip install -e $GWS_MCP_DIR"
-        else
-            print_warning "Neither pip nor uv found — install gws-admin-mcp manually"
-        fi
-    fi
-
     read -rp "  Path to your OAuth client_secret JSON file (or Enter to skip): " GWS_CLIENT_FILE
     read -rp "  Your Google Workspace domain (e.g. company.com, or Enter to skip): " GWS_DOMAIN
 
@@ -294,7 +356,8 @@ if ask_yes_no "Connect Google Workspace now?"; then
         print_info "On first use, your browser will open to authenticate."
         print_info "Sign in with your Google admin account."
     else
-        print_warning "Skipped Google Workspace config — set it up later"
+        print_warning "Skipped Google Workspace credentials — configure later with:"
+        print_info "claude mcp add-json \"gws-admin\" '{\"command\": \"gws-admin-mcp\", \"env\": {\"GWS_OAUTH_CLIENT_FILE\": \"/path/to/client_secret.json\", \"GOOGLE_WORKSPACE_DOMAIN\": \"yourdomain.com\"}}'"
     fi
 else
     print_warning "Skipped Google Workspace — see setup guide at:"
@@ -339,7 +402,7 @@ print_step "6" "Connect MDM — Device Management"
 echo "  This connects Claude Code to your MDM for read-only"
 echo "  device queries: assigned devices, profiles, compliance, fleet inventory."
 echo ""
-echo "  ${BOLD}You can select multiple platforms${NC} (e.g. Kandji for Mac + Intune for Windows)."
+printf "  ${BOLD}You can select multiple platforms${NC} (e.g. Kandji for Mac + Intune for Windows).\n"
 echo ""
 echo "  Select all MDM platforms you use:"
 echo "    1. Kandji (now Iru)"
@@ -410,37 +473,6 @@ fi
 
 if [[ "$MDM_CONFIGURED" == true ]]; then
     echo ""
-    echo "  Installing mdm-mcp server..."
-
-    MDM_MCP_DIR="$HOME/.it-os/mdm-mcp"
-    if [[ ! -d "$MDM_MCP_DIR" ]]; then
-        mkdir -p "$HOME/.it-os"
-        git clone https://github.com/fenix210/mdm-mcp.git "$MDM_MCP_DIR" 2>/dev/null && \
-            print_success "mdm-mcp cloned" || \
-            print_error "Failed to clone mdm-mcp"
-    else
-        print_success "mdm-mcp already exists at $MDM_MCP_DIR"
-    fi
-
-    # Install the package
-    if command -v pip &> /dev/null; then
-        pip install -e "$MDM_MCP_DIR" --break-system-packages 2>/dev/null && \
-            print_success "mdm-mcp installed" || \
-            print_warning "Install failed — try manually: pip install -e $MDM_MCP_DIR"
-
-        # Install Intune extras if selected
-        if [[ "$MDM_CHOICES" == *"3"* ]]; then
-            pip install -e "${MDM_MCP_DIR}[intune]" --break-system-packages 2>/dev/null && \
-                print_success "Intune dependencies installed" || \
-                print_warning "Intune extras failed — try: pip install msal"
-        fi
-    elif command -v uv &> /dev/null; then
-        uv pip install -e "$MDM_MCP_DIR" 2>/dev/null && \
-            print_success "mdm-mcp installed" || \
-            print_warning "Install failed — try manually: uv pip install -e $MDM_MCP_DIR"
-    else
-        print_warning "Neither pip nor uv found — install mdm-mcp manually"
-    fi
 
     # Remove trailing comma and space from env vars
     MDM_ENV_VARS="${MDM_ENV_VARS%, }"
